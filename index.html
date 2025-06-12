@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('https://static.scientificamerican.com/sciam/cache/file/01C9741F-6F6D-4882-8217D92370325AA7_source.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            background-color: rgba(0, 0, 0, 0.6); /* Darker and semi-transparent */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 480px; /* Increased width */
+            height: 80vh; /* Added height */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background-color: #0066cc;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            padding: 20px; /* Increased padding */
+        }
+
+        .chat-logo {
+            width: 50px; /* Increased width */
+            height: 50px; /* Increased height */
+            border-radius: 50%;
+            margin-right: 20px; /* Increased margin */
+        }
+
+        .chat-title {
+            font-size: 24px; /* Increased font size */
+            font-weight: bold;
+            margin-right: auto;
+        }
+
+        .chat-messages {
+            padding: 20px; /* Increased padding */
+            flex: 1;
+            overflow-y: auto;
+            color: #fff; /* White text color for readability */
+        }
+
+        .chat-message {
+            margin: 10px 0;
+            padding: 15px; /* Increased padding */
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .chat-message.bot {
+            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent for bot messages */
+            align-self: flex-start;
+        }
+
+        .chat-message.user {
+            background-color: rgba(0, 123, 255, 0.6); /* Semi-transparent for user messages */
+            align-self: flex-end;
+        }
+
+        .message-text {
+            font-size: 16px; /* Increased font size */
+        }
+
+        .chat-input-container {
+            display: flex;
+            border-top: 1px solid #ddd;
+            padding: 20px; /* Increased padding */
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px; /* Increased padding */
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 16px; /* Increased font size */
+        }
+
+        .chat-send {
+            background-color: #0066cc;
+            color: #fff;
+            border: none;
+            padding: 15px 20px; /* Increased padding */
+            border-radius: 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 16px; /* Increased font size */
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <img src="https://www.istudiotech.in/wp-content/uploads/2019/05/chatbot-health-care.png" alt="Chatbot Logo" class="chat-logo">
+            <span class="chat-title">Health Bot</span>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="chat-message bot">
+                <span class="message-text">Hello! Welcome to Health Bot. Please enter your name.</span>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message here...">
+            <button class="chat-send" id="chat-send">Send</button>
+        </div>
+    </div>
+
+    <script>
+        let userName = "";
+        let symptomCount = 0;
+        let symptoms = [];
+
+        function getBotResponse(message) {
+            fetch('/get_response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (symptomCount < 3) {
+                    addMessage('bot', data.bot_response);
+                } else {
+                    addMessage('bot', `You have provided ${symptoms.length} symptoms: ${symptoms.join(', ')}. Processing...`);
+                    // Call your function to send symptoms to model here
+                    sendSymptomsToModel(symptoms);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    
+        document.getElementById('chat-send').addEventListener('click', function() {
+            sendMessage();
+        });
+    
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (message !== '') {
+                addMessage('user', message);
+                
+                if (!userName) {
+                    userName = message;
+                    addMessage('bot', `Hello ${userName}! Please enter your first symptom.`);
+                } else {
+                    if (symptomCount < 2) {
+                        symptoms.push(message);
+                        symptomCount++;
+                        addMessage('bot', `Please enter your next symptom.`);
+                    } else {
+                        getBotResponse(message);
+                    }
+                }
+                
+                input.value = '';
+            }
+        }
+    
+        function addMessage(sender, text) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message ' + sender;
+            const messageText = document.createElement('span');
+            messageText.className = 'message-text';
+            messageText.textContent = text;
+            messageDiv.appendChild(messageText);
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function sendSymptomsToModel(symptoms) {
+            // Replace this with your code to send symptoms to your model
+            console.log('Sending symptoms to model:', symptoms);
+            // Example fetch call
+            fetch('/send_symptoms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symptoms: symptoms })
+            })
+            .then(response => response.json())
+            .then(data => console.log('Model response:', data))
+            .catch(error => console.error('Error sending symptoms to model:', error));
+        }
+    </script>
+</body>
+</html>
