@@ -3,128 +3,438 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Interface</title>
+    <title>Health Assistant Chat</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        .typing-indicator::after {
+            content: '...';
+            animation: typing 1.5s steps(3, end) infinite;
+            display: inline-block;
+            overflow: hidden;
+            vertical-align: bottom;
+        }
+        
+        .chat-bubble {
+            max-width: 80%;
+            transition: all 0.3s ease;
+            transform-origin: left bottom;
+        }
+        
+        .chat-bubble.user {
+            transform-origin: right bottom;
+        }
+        
+        .chat-bubble.enter {
+            animation: bubbleEnter 0.3s ease-out forwards;
+        }
+        
+        @keyframes bubbleEnter {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .quick-reply {
+            transition: all 0.2s ease;
+        }
+        
+        .quick-reply:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .health-card {
+            transition: all 0.3s ease;
+        }
+        
+        .health-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark-mode {
+            background-color: #1a202c;
+            color: #f7fafc;
+        }
+        
+        /* Preserve original background with dark mode overlay */
+        .original-bg {
             background: url('https://static.scientificamerican.com/sciam/cache/file/01C9741F-6F6D-4882-8217D92370325AA7_source.jpg') no-repeat center center fixed;
             background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
         }
-
-        .chat-container {
-            background-color: rgba(0, 0, 0, 0.6); /* Darker and semi-transparent */
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 480px; /* Increased width */
-            height: 80vh; /* Added height */
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+        
+        .dark-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
         }
-
-        .chat-header {
-            background-color: #0066cc;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            padding: 20px; /* Increased padding */
-        }
-
-        .chat-logo {
-            width: 50px; /* Increased width */
-            height: 50px; /* Increased height */
-            border-radius: 50%;
-            margin-right: 20px; /* Increased margin */
-        }
-
-        .chat-title {
-            font-size: 24px; /* Increased font size */
-            font-weight: bold;
-            margin-right: auto;
-        }
-
-        .chat-messages {
-            padding: 20px; /* Increased padding */
-            flex: 1;
-            overflow-y: auto;
-            color: #fff; /* White text color for readability */
-        }
-
-        .chat-message {
-            margin: 10px 0;
-            padding: 15px; /* Increased padding */
-            border-radius: 10px;
-            max-width: 80%;
-        }
-
-        .chat-message.bot {
-            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent for bot messages */
-            align-self: flex-start;
-        }
-
-        .chat-message.user {
-            background-color: rgba(0, 123, 255, 0.6); /* Semi-transparent for user messages */
-            align-self: flex-end;
-        }
-
-        .message-text {
-            font-size: 16px; /* Increased font size */
-        }
-
-        .chat-input-container {
-            display: flex;
-            border-top: 1px solid #ddd;
-            padding: 20px; /* Increased padding */
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 15px; /* Increased padding */
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            outline: none;
-            font-size: 16px; /* Increased font size */
-        }
-
-        .chat-send {
-            background-color: #0066cc;
-            color: #fff;
-            border: none;
-            padding: 15px 20px; /* Increased padding */
-            border-radius: 20px;
-            margin-left: 10px;
-            cursor: pointer;
-            font-size: 16px; /* Increased font size */
+        
+        .dark-mode .dark-overlay {
+            background-color: rgba(0, 0, 0, 0.8);
         }
     </style>
 </head>
-<body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <img src="https://www.istudiotech.in/wp-content/uploads/2019/05/chatbot-health-care.png" alt="Chatbot Logo" class="chat-logo">
-            <span class="chat-title">Health Bot</span>
-        </div>
-        <div class="chat-messages" id="chat-messages">
-            <div class="chat-message bot">
-                <span class="message-text">Hello! Welcome to Health Bot. Please enter your name.</span>
+<body class="original-bg min-h-screen flex items-center justify-center p-4 transition-colors duration-300 dark:text-white">
+    <div class="max-w-md w-full flex flex-col h-[90vh]">
+        <!-- Chat Container -->
+        <div class="dark-overlay rounded-xl flex flex-col h-full shadow-xl">
+            <!-- Header -->
+            <div class="bg-teal-600 text-white p-4 rounded-t-xl flex items-center justify-between shadow-md dark:bg-teal-800">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <img src="https://www.istudiotech.in/wp-content/uploads/2019/05/chatbot-health-care.png" alt="Health Assistant" class="w-10 h-10 rounded-full border-2 border-white">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg">Health Bot</h1>
+                        <p class="text-xs opacity-80">Online</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="dark-mode-toggle" class="p-2 rounded-full hover:bg-teal-700 transition-colors dark:hover:bg-teal-900" aria-label="Toggle dark mode">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                    <button id="voice-toggle" class="p-2 rounded-full hover:bg-teal-700 transition-colors dark:hover:bg-teal-900" aria-label="Toggle voice assistant">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
             </div>
-        </div>
-        <div class="chat-input-container">
-            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message here...">
-            <button class="chat-send" id="chat-send">Send</button>
+            
+            <!-- Chat Messages -->
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto">
+                <div class="chat-bubble bot enter mb-4">
+                    <div class="flex items-start space-x-2">
+                        <img src="https://www.istudiotech.in/wp-content/uploads/2019/05/chatbot-health-care.png" alt="Bot" class="w-8 h-8 rounded-full mt-1">
+                        <div>
+                            <div class="bg-blue-100 text-gray-800 p-3 rounded-2xl rounded-tl-none max-w-xs dark:bg-gray-700 dark:text-white">
+                                <p>Hello! 👋 Welcome to Health Bot. Please enter your name.</p>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1 ml-1 dark:text-gray-400">Just now</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Replies -->
+            <div id="quick-replies" class="px-4 py-2 bg-gray-50 flex flex-wrap gap-2 dark:bg-gray-700">
+                <!-- Quick replies will be added here dynamically -->
+            </div>
+            
+            <!-- Input Area -->
+            <div class="p-4 bg-white rounded-b-xl dark:bg-gray-800">
+                <div class="flex items-center space-x-2">
+                    <div class="relative flex-1">
+                        <input 
+                            id="chat-input" 
+                            type="text" 
+                            placeholder="Type your message..." 
+                            class="w-full p-3 pl-4 pr-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            aria-label="Type your message"
+                        >
+                        <button 
+                            id="voice-input" 
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-teal-600 focus:outline-none dark:text-gray-400"
+                            aria-label="Voice input"
+                        >
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                    </div>
+                    <button 
+                        id="chat-send" 
+                        class="bg-teal-600 text-white p-3 rounded-full hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors dark:bg-teal-700 dark:hover:bg-teal-800"
+                        aria-label="Send message"
+                    >
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        // DOM Elements
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const quickReplies = document.getElementById('quick-replies');
+        const voiceInput = document.getElementById('voice-input');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const voiceToggle = document.getElementById('voice-toggle');
+        
+        // App State
         let userName = "";
-        let symptomCount = 0;
+        let conversationState = "get_name"; // can be: get_name, get_symptoms, show_options
         let symptoms = [];
-
+        let recognition;
+        let voiceEnabled = false;
+        
+        // Initialize the app
+        init();
+        
+        function init() {
+            // Event Listeners
+            chatSend.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+            
+            // Dark Mode Toggle
+            darkModeToggle.addEventListener('click', toggleDarkMode);
+            
+            // Voice Toggle
+            voiceToggle.addEventListener('click', toggleVoiceAssistant);
+            
+            // Check for saved dark mode preference
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.documentElement.classList.add('dark');
+            }
+            
+            // Voice Recognition Setup
+            setupVoiceRecognition();
+            
+            // Add some quick replies for the initial state
+            updateQuickReplies(['Hello', 'Hi there']);
+        }
+        
+        function toggleVoiceAssistant() {
+            voiceEnabled = !voiceEnabled;
+            if (voiceEnabled) {
+                voiceToggle.classList.add('text-green-500');
+                voiceToggle.innerHTML = '<i class="fas fa-microphone-alt"></i>';
+                addSystemMessage('Voice assistant enabled. Say "Hey Health Bot" to activate.');
+            } else {
+                voiceToggle.classList.remove('text-green-500');
+                voiceToggle.innerHTML = '<i class="fas fa-microphone"></i>';
+                addSystemMessage('Voice assistant disabled.');
+            }
+        }
+        
+        function setupVoiceRecognition() {
+            try {
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                recognition.onresult = (event) => {
+                    if (!voiceEnabled) return;
+                    
+                    const transcript = event.results[0][0].transcript;
+                    if (transcript.toLowerCase().includes('hey health bot') || transcript.toLowerCase().includes('hi health bot')) {
+                        chatInput.value = transcript.replace(/hey health bot/gi, '').trim();
+                        if (chatInput.value) {
+                            sendMessage();
+                        } else {
+                            recognition.start(); // Continue listening
+                        }
+                    } else {
+                        chatInput.value = transcript;
+                        sendMessage();
+                    }
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error', event.error);
+                    addSystemMessage('Voice input failed. Please try typing instead.');
+                };
+                
+                recognition.onend = () => {
+                    if (voiceEnabled) {
+                        recognition.start(); // Continue listening when voice is enabled
+                    }
+                };
+                
+                voiceInput.addEventListener('click', () => {
+                    try {
+                        recognition.start();
+                        voiceInput.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                        voiceInput.classList.add('text-red-500');
+                        addSystemMessage('Listening... Speak now.');
+                    } catch (err) {
+                        console.error('Speech recognition error:', err);
+                        addSystemMessage('Voice input is not supported in your browser.');
+                    }
+                });
+            } catch (err) {
+                console.error('Speech recognition not supported', err);
+                voiceInput.style.display = 'none';
+                voiceToggle.style.display = 'none';
+            }
+        }
+        
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        }
+        
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            addMessage('user', message);
+            chatInput.value = '';
+            
+            // Handle conversation flow
+            switch (conversationState) {
+                case 'get_name':
+                    userName = message;
+                    addMessage('bot', `Nice to meet you, ${userName}! 😊 How can I help you today?`);
+                    conversationState = 'show_options';
+                    updateQuickReplies([
+                        'I have symptoms',
+                        'Need diet advice',
+                        'Find a specialist',
+                        'General health tips'
+                    ]);
+                    break;
+                    
+                case 'show_options':
+                    if (message.toLowerCase().includes('symptom') || message.toLowerCase().includes('not feeling')) {
+                        addMessage('bot', `Let's check your symptoms. Please describe your first symptom in detail.`);
+                        conversationState = 'get_symptoms';
+                        symptoms = [];
+                        updateQuickReplies([]);
+                        showSymptomSelector();
+                    } else if (message.toLowerCase().includes('diet') || message.toLowerCase().includes('food')) {
+                        showDietOptions();
+                    } else if (message.toLowerCase().includes('specialist') || message.toLowerCase().includes('doctor')) {
+                        showSpecialistOptions();
+                    } else {
+                        addMessage('bot', `I'm here to help with your health concerns. Please choose an option or describe your issue.`);
+                        updateQuickReplies([
+                            'I have symptoms',
+                            'Need diet advice',
+                            'Find a specialist',
+                            'General health tips'
+                        ]);
+                    }
+                    break;
+                    
+                case 'get_symptoms':
+                    symptoms.push(message);
+                    if (symptoms.length < 3) {
+                        addMessage('bot', `Got it. Please describe symptom #${symptoms.length + 1}, or say "enough" if you're done.`);
+                        updateQuickReplies(['Enough symptoms', 'Cancel']);
+                        showSymptomSelector();
+                    } else {
+                        processSymptoms();
+                    }
+                    break;
+                    
+                default:
+                    addMessage('bot', `I'm not sure how to respond to that. How else can I help?`);
+            }
+        }
+        
+        function showSymptomSelector() {
+            // This would be connected to your backend to get symptom suggestions
+            const symptomInput = document.createElement('div');
+            symptomInput.className = 'mt-2';
+            symptomInput.innerHTML = `
+                <div class="relative">
+                    <input 
+                        id="symptom-input" 
+                        type="text" 
+                        placeholder="Search symptoms..." 
+                        class="w-full p-2 pl-3 pr-8 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        aria-label="Search symptoms"
+                    >
+                    <div id="symptom-suggestions" class="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-auto dark:bg-gray-700" style="display: none;"></div>
+                </div>
+            `;
+            
+            // Add it after the last message
+            chatMessages.appendChild(symptomInput);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Setup symptom autocomplete
+            const symptomInputField = document.getElementById('symptom-input');
+            const symptomSuggestions = document.getElementById('symptom-suggestions');
+            
+            symptomInputField.addEventListener('input', () => {
+                const query = symptomInputField.value.trim();
+                if (query.length > 1) {
+                    // Call your backend to get symptom suggestions
+                    fetch('/get_symptoms', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ query: query })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.symptoms && data.symptoms.length > 0) {
+                            symptomSuggestions.innerHTML = data.symptoms.map(symptom => `
+                                <div class="p-2 hover:bg-gray-100 cursor-pointer dark:hover:bg-gray-600" onclick="selectSymptom('${symptom}')">
+                                    ${symptom}
+                                </div>
+                            `).join('');
+                            symptomSuggestions.style.display = 'block';
+                        } else {
+                            symptomSuggestions.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching symptoms:', error);
+                        symptomSuggestions.style.display = 'none';
+                    });
+                } else {
+                    symptomSuggestions.style.display = 'none';
+                }
+            });
+            
+            // Hide suggestions when clicking elsewhere
+            document.addEventListener('click', (e) => {
+                if (e.target !== symptomInputField) {
+                    symptomSuggestions.style.display = 'none';
+                }
+            });
+        }
+        
+        function selectSymptom(symptom) {
+            document.getElementById('symptom-input').value = symptom;
+            document.getElementById('symptom-suggestions').style.display = 'none';
+            chatInput.value = symptom;
+            sendMessage();
+        }
+        
+        function processSymptoms() {
+            addMessage('bot', `Thank you. You've described ${symptoms.length} symptoms. Analyzing...`);
+            
+            // Show typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'chat-bubble bot mb-4';
+            typingIndicator.innerHTML = `
+                <div class="flex items-start space-x-2">
+                    <img src="https://www.istudiotech.in/wp-content/uploads/2019/05/chatbot-health-care.png" alt="Bot" class="w-8 h-8 rounded-full mt-1">
+                    <div>
+                        <div class="bg-blue-100 text-gray-800 p-3 rounded-2xl rounded-tl-none max-w-xs dark:bg-gray-700 dark:text-white">
+                            <p class="typing-indicator">Analyzing symptoms</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Call your existing backend endpoint
+            getBotResponse(symptoms.join(', '));
+        }
+        
+        // Preserve your original backend functions
         function getBotResponse(message) {
             fetch('/get_response', {
                 method: 'POST',
@@ -135,67 +445,201 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (symptomCount < 3) {
+                // Remove typing indicator
+                const typingIndicators = document.querySelectorAll('.typing-indicator');
+                typingIndicators.forEach(indicator => indicator.parentElement.parentElement.parentElement.remove());
+                
+                if (data.bot_response) {
                     addMessage('bot', data.bot_response);
-                } else {
-                    addMessage('bot', `You have provided ${symptoms.length} symptoms: ${symptoms.join(', ')}. Processing...`);
-                    // Call your function to send symptoms to model here
-                    sendSymptomsToModel(symptoms);
+                    
+                    // If we have a diagnosis, show additional info
+                    if (data.diagnosis) {
+                        showConditionCard(data.diagnosis, data.description, data.precautions);
+                    }
+                    
+                    conversationState = 'show_options';
+                    updateQuickReplies([
+                        'More details',
+                        'Prevention tips',
+                        'Diet recommendations',
+                        'Find a doctor',
+                        'Start over'
+                    ]);
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                addMessage('bot', "Sorry, I'm having trouble connecting to the health database. Please try again later.");
+            });
         }
-    
-        document.getElementById('chat-send').addEventListener('click', function() {
-            sendMessage();
-        });
-    
-        document.getElementById('chat-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-    
-        function sendMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
+        
+        function showConditionCard(condition, description, precautions) {
+            const card = document.createElement('div');
+            card.className = 'health-card bg-blue-50 border border-blue-100 rounded-xl p-4 mt-4 mb-4 shadow-sm dark:bg-gray-700 dark:border-gray-600';
+            card.innerHTML = `
+                <h3 class="font-bold text-lg text-blue-800 mb-2 dark:text-blue-300">${condition}</h3>
+                <p class="text-gray-700 mb-3 dark:text-gray-300">${description || 'No specific description available.'}</p>
+                <h4 class="font-semibold text-blue-700 mb-1 dark:text-blue-200">Recommended actions:</h4>
+                <ul class="list-disc list-inside text-gray-600 space-y-1 dark:text-gray-400">
+                    ${(precautions && precautions.length > 0) ? 
+                      precautions.map(item => `<li>${item}</li>`).join('') : 
+                      '<li>Consult with a healthcare professional for proper diagnosis.</li>'}
+                </ul>
+                <button class="mt-3 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors dark:bg-teal-700 dark:hover:bg-teal-800">
+                    Talk to a specialist about ${condition}
+                </button>
+            `;
             
-            if (message !== '') {
-                addMessage('user', message);
-                
-                if (!userName) {
-                    userName = message;
-                    addMessage('bot', `Hello ${userName}! Please enter your first symptom.`);
-                } else {
-                    if (symptomCount < 2) {
-                        symptoms.push(message);
-                        symptomCount++;
-                        addMessage('bot', `Please enter your next symptom.`);
-                    } else {
-                        getBotResponse(message);
-                    }
-                }
-                
-                input.value = '';
-            }
+            // Add the card after the last message
+            chatMessages.appendChild(card);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-    
+        
+        function showDietOptions() {
+            // Call your backend for diet recommendations
+            fetch('/get_diet_advice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symptoms: symptoms })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage('bot', `Here are some dietary recommendations:`);
+                
+                data.diet_plans.forEach(plan => {
+                    const card = document.createElement('div');
+                    card.className = 'health-card bg-green-50 border border-green-100 rounded-xl p-4 mt-4 mb-4 shadow-sm dark:bg-gray-700 dark:border-gray-600';
+                    card.innerHTML = `
+                        <h3 class="font-bold text-lg text-green-800 mb-2 dark:text-green-300">${plan.title}</h3>
+                        <p class="text-gray-700 mb-3 dark:text-gray-300">${plan.description}</p>
+                        <h4 class="font-semibold text-green-700 mb-1 dark:text-green-200">Recommended foods:</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${plan.foods.map(food => `<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm dark:bg-gray-600 dark:text-green-200">${food}</span>`).join('')}
+                        </div>
+                    `;
+                    chatMessages.appendChild(card);
+                });
+                
+                conversationState = 'show_options';
+                updateQuickReplies([
+                    'More diet options',
+                    'Find a nutritionist',
+                    'Back to main menu'
+                ]);
+            })
+            .catch(error => {
+                console.error('Error fetching diet advice:', error);
+                addMessage('bot', "Sorry, I couldn't retrieve diet recommendations. Please try again later.");
+            });
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function showSpecialistOptions() {
+            // Call your backend for specialist recommendations
+            fetch('/get_specialists', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symptoms: symptoms })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage('bot', `Based on your symptoms, you might want to consult with:`);
+                
+                data.specialists.forEach(spec => {
+                    const card = document.createElement('div');
+                    card.className = 'health-card bg-purple-50 border border-purple-100 rounded-xl p-4 mt-4 mb-4 shadow-sm dark:bg-gray-700 dark:border-gray-600';
+                    card.innerHTML = `
+                        <h3 class="font-bold text-lg text-purple-800 mb-2 dark:text-purple-300">${spec.type}</h3>
+                        <p class="text-gray-700 dark:text-gray-300">${spec.reason}</p>
+                        <button class="mt-2 bg-purple-600 text-white px-3 py-1 rounded-full text-sm hover:bg-purple-700 transition-colors dark:bg-purple-700 dark:hover:bg-purple-800">
+                            Find nearby ${spec.type}
+                        </button>
+                    `;
+                    chatMessages.appendChild(card);
+                });
+                
+                conversationState = 'show_options';
+                updateQuickReplies([
+                    'More specialist types',
+                    'Book an appointment',
+                    'Back to main menu'
+                ]);
+            })
+            .catch(error => {
+                console.error('Error fetching specialists:', error);
+                addMessage('bot', "Sorry, I couldn't retrieve specialist information. Please try again later.");
+            });
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
         function addMessage(sender, text) {
-            const messagesContainer = document.getElementById('chat-messages');
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'chat-message ' + sender;
-            const messageText = document.createElement('span');
-            messageText.className = 'message-text';
-            messageText.textContent = text;
-            messageDiv.appendChild(messageText);
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messageDiv.className = `chat-bubble ${sender} enter mb-4`;
+            
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="flex items-end justify-end space-x-2">
+                        <div>
+                            <div class="bg-teal-600 text-white p-3 rounded-2xl rounded-tr-none max-w-xs">
+                                <p>${text}</p>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1 mr-1 text-right dark:text-gray-400">${timestamp}</p>
+                        </div>
+                        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="User" class="w-8 h-8 rounded-full">
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="flex items-start space-x-2">
+                        <img src="https://www.istudiotech.in/wp-content/uploads/2019/05/chatbot-health-care.png" alt="Bot" class="w-8 h-8 rounded-full mt-1">
+                        <div>
+                            <div class="bg-blue-100 text-gray-800 p-3 rounded-2xl rounded-tl-none max-w-xs dark:bg-gray-700 dark:text-white">
+                                <p>${text}</p>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1 ml-1 dark:text-gray-400">${timestamp}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-
+        
+        function addSystemMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'text-center text-xs text-gray-500 my-2 dark:text-gray-400';
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function updateQuickReplies(replies) {
+            quickReplies.innerHTML = '';
+            
+            replies.forEach(reply => {
+                const button = document.createElement('button');
+                button.className = 'quick-reply bg-white text-gray-800 px-3 py-2 rounded-full text-sm shadow-sm hover:shadow-md transition-all dark:bg-gray-600 dark:text-white';
+                button.textContent = reply;
+                button.addEventListener('click', () => {
+                    chatInput.value = reply;
+                    sendMessage();
+                });
+                quickReplies.appendChild(button);
+            });
+        }
+        
+        // Preserve your original function to send symptoms to model
         function sendSymptomsToModel(symptoms) {
-            // Replace this with your code to send symptoms to your model
             console.log('Sending symptoms to model:', symptoms);
-            // Example fetch call
             fetch('/send_symptoms', {
                 method: 'POST',
                 headers: {
@@ -204,9 +648,18 @@
                 body: JSON.stringify({ symptoms: symptoms })
             })
             .then(response => response.json())
-            .then(data => console.log('Model response:', data))
+            .then(data => {
+                console.log('Model response:', data);
+                if (data.diagnosis) {
+                    addMessage('bot', `Our analysis suggests: ${data.diagnosis}`);
+                    showConditionCard(data.diagnosis, data.description, data.precautions);
+                }
+            })
             .catch(error => console.error('Error sending symptoms to model:', error));
         }
+        
+        // Make functions available globally for HTML onclick attributes
+        window.selectSymptom = selectSymptom;
     </script>
 </body>
 </html>
